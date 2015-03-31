@@ -48,7 +48,7 @@ public class ASPlayer
 
     /// <summary>
     /// Initialises all encapsulated variables, and check their validity to create
-    /// the new team object.
+    /// the new player object. This object does not recieve an ID as it will be used to store new users
     /// 
     /// <parm name="name">Name of the Player</parm>
     /// <parm name="location">Continent of the player</parm>
@@ -207,7 +207,7 @@ public class ASPlayer
     /// </summary>
     public Int32 GetID()
     {
-        return player_wins;
+        return player_id;
     }
 
     /// <summary>
