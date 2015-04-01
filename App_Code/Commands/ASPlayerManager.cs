@@ -293,6 +293,9 @@ public class ASPlayerManager : ASDatabase
     {
         Int32 returnID = 0;
 
+        // Check if the player exists on the 3rd party API
+
+
         // Check we are not placing duplicate data
         if (!DoesPlayerExist(player) && player.IsValid())
         {

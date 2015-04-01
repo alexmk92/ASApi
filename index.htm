@@ -1,0 +1,488 @@
+﻿
+<!-- 
+    Normally I would do some template engine stuff when writing a site, however
+    for the scope of this assignment, it doesn't need to be much.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>ASPlayer: Documentation</title>
+
+    <!-- Sty -->
+    <script type="text/javascript" src="./Web/Scripts/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="./Web/Scripts/bootstrap.min.js"></script>
+    <script type="text/javascript" src="./Web/Scripts/functions.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="./Web/Styles/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="./Web/Styles/main.css" />
+</head>
+<body>
+    
+    <!-- Main Body -->
+    <section class="content-fluid">
+        <section class="top">
+            <section class="wrapper">
+            <h1>API Documentation</h1>
+            <p>
+                The ASLeague API provides developers with a means to manage custom tournaments for League of Legends
+                games. In its current state the API only provides a full collection of REST methods for creating
+                and managing players in the system. In the future this will be extended to handle Games, League Tables
+                and Matches and Rosters - however that would have been too much for the scope of this assignment.
+            </p>
+            <br />
+            <h2>My Keys <span class="selectedKeyWrap">Selected Key: <select id="selectedKey" class="form-control"><option>Public</option><option>Private</option></select></span></h2>
+            <br />
+            <p>
+                The API assigns both public and private keys.  Public keys are restricted to GET requests only, whereas Private
+                keys may access any resource on the server through any RESTful call.  The reason this has been implemented is to
+                demonstrate a basic level of access control. In the case you believe your key has been compromised, you may simply
+                reset the key - this will be reflected in the documentation.<br /><br />
+                <p>Private Key: <span id="privateKey"></span> <a href="#" id="resetPrivate">Reset Key</a></p>
+                <p>Public Key : <span id="publicKey"></span> <a href="#" id="resetPublic">Reset Key</a></p>
+            </p>
+            </section>
+
+        </section>
+        <!-- Get Requests -->
+        <section class="getRequests">
+            <section class="wrapper">
+            <h2>GET Requests</h2>
+            <p>
+                As with any API, it's useless unless you can retrieve data. We provide several ways to interface
+                with player objects stored in the system, all GET requests can be processed using a Public or Private API key.
+
+                <!-- All Player request -->
+                <h3>Retrieving all Players<p class="badge green">GET</p></h3>
+                <p>
+                    In the case that you wish to retrieve all players in the system, simply call <mark>/v1/player?api_key=<span class="selectedKey"></span></mark>
+                    this will query the API for all players using your API key. <br /><br />
+
+                <h4>Response Codes</h4>
+                <!-- Response Codes -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>200</td>
+                        <td>The resource was successfully retrieved, a list of players in JSON format were returned.</td>
+                    </tr>
+                    <tr>
+                        <td>404</td>
+                        <td>No players were found for on the server.</td>
+                    </tr>
+                    <tr>
+                        <td>500</td>
+                        <td>Internal server error when retrieving the users, normally caused by an invalid URI or trailing slash after /player</td>
+                    </tr>
+                </table>
+                <br />
+                <h4>Demo</h4>
+                    In order to demonstrate further, hit the TEST button below to request recieve a list of all current users.<br /><br />
+                    <a href="#" class="btn btn-primary" role="button" id="btnGetAllPlayers">Test</a>
+                </p>
+
+                <pre class="code">
+                    <div class="close">X</div>
+                    <p id="allPlayersCode"></p>
+                </pre>
+                <hr />
+                <!-- Specific Player request -->
+                <h3>Retrieving Players by Name and Location<p class="badge green">GET</p></h3>
+                <p>
+                    Retrieving all users in the system is well and good, but what if you want to find a specific player? In order to do this you can use the following URI: 
+                    <mark>/v1/player/location/name?api_key=<span class="selectedKey"></span></mark>, it should be noted that providing a location of ALL will search 
+                    for the requested user on every Region server. <br /><br />
+
+                <!-- Parameters -->
+                <h4>Parameters</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>*location</td>
+                        <td>The region server the the player exists on. Either ALL, EUNE, EUW, KR, LAN, LAS, NA, OCE, RU or TR</td>
+                    </tr>
+                    <tr>
+                        <td>*name</td>
+                        <td>The name of the player who is being searched for, this is not case sensitive and must be supplied for a response.</td>
+                    </tr>
+                </table>
+                <br />
+                <h4>Response Codes</h4>
+                <!-- Response Codes -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>200</td>
+                        <td>The request was successful, the user matching the input parameters is returned.</td>
+                    </tr>
+                    <tr>
+                        <td>400</td>
+                        <td>Bad request: caused by the user formatting URI incorrectly, i.e. /v1/player/name/country, instead of/v1/player/country/name</td>
+                    </tr>
+                    <tr>
+                        <td>404</td>
+                        <td>No players were found who matched </td>
+                    </tr>
+                    <tr>
+                        <td>500</td>
+                        <td>Internal server error when retrieving the users, normally caused by an invalid URI or trailing slash after /player</td>
+                    </tr>
+                </table>
+
+                <h4>Demo</h4>
+                    To demosntrate, please fill the parameters in below. If you leave these blank a default query will be sent to the server.<br /><br />
+
+                    <form class="form-inline">
+                        <!-- Get the region -->
+                        <select id="gSelectRegion" class="form-control">
+                            <option>ALL</option>
+                            <option>EUNE</option>
+                            <option>EUW</option>
+                            <option>KR</option>
+                            <option>LAN</option>
+                            <option>LAS</option>
+                            <option>NA</option>
+                            <option>OCE</option>
+                            <option>RU</option>
+                            <option>TR</option>
+                        </select>
+                        <!-- Get the player name -->
+                        <input id="gPlayerName" class="form-control" type="text" placeholder="Enter Name..." />
+                    </form>
+
+                    <a href="#" class="btn btn-primary" role="button" id="btnPlayersByName">Test</a>
+
+                    <pre class="code">
+                        <div class="close">X</div>
+                        <p id="specificPlayersCode"></p>
+                    </pre>
+                </p>
+            </p>
+            </section>
+        </section>
+        
+
+        <!-- Post request -->
+        <section class="postRequests">
+            <section class="wrapper">
+            <h2>POST Requests</h2>
+            <h3>Creating a new user<p class="badge yellow">POST</p></h3>
+            <p>
+                Creating a user may seem a daunting task but we make the process easy. Simply send a JSON object containing all of the fields described in the
+                parameters summary, we will then authenticate with the Riot Games API to ensure that this player does infact exist on the server specified.
+                To create a player, simply POST to <mark>/v1/player?api_key=<span class="selectedKey"></span></mark><br /><br />
+
+                <!-- Parameters -->
+                <h4>Parameters</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>*location</td>
+                        <td>The region server the the player will exist on. Either ALL, EUNE, EUW, KR, LAN, LAS, NA, OCE, RU or TR</td>
+                    </tr>
+                    <tr>
+                        <td>*name</td>
+                        <td>The name of the player to be created, this is not case sensitive and must be supplied for a response.</td>
+                    </tr>
+                    <tr>
+                        <td>wins</td>
+                        <td>The total number of wins this user has, default to 0. When a game is won, add 3 to points.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>draws</td>
+                        <td>The total number of draws this user has, defaults to 0. When a game is drawn add 1 to points.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>losses</td>
+                        <td>The total number of losses this user has, defaults to 0. When a game is lost, minus 3 from points.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>points</td>
+                        <td>The total number of points this user has - this will normally be 0 if it is a new user in the system.
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <h4>Response Codes</h4>
+                <!-- Response Codes -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>200</td>
+                        <td>The player was successfully created.</td>
+                    </tr>
+                    <tr>
+                        <td>400</td>
+                        <td>Bad Request: The player already exists on the server</td>
+                    </tr>
+                    <tr>
+                        <td>500</td>
+                        <td>Internal server error when creating the user. Normally caused by an invalid object, or not being able to connect to the third party API.</td>
+                    </tr>
+                </table>
+
+                <br />
+                <h4>Demo</h4>
+                To demosntrate, please fill the parameters in below. If you leave these blank a default object will be sent to the server.<br /><br />
+
+                <form class="form-inline">
+                    <!-- Get the region -->
+                    <select id="pRegion" class="form-control">
+                        <option>ALL</option>
+                        <option>EUNE</option>
+                        <option>EUW</option>
+                        <option>KR</option>
+                        <option>LAN</option>
+                        <option>LAS</option>
+                        <option>NA</option>
+                        <option>OCE</option>
+                        <option>RU</option>
+                        <option>TR</option>
+                    </select>
+                    <!-- Get the player name -->
+                    <input id="pName" class="form-control" type="text" placeholder="Enter Name..." />
+                    <input id="pWins" class="form-control" type="text" placeholder="Enter Wins..." />
+                    <input id="pDraws" class="form-control" type="text" placeholder="Enter Draws..." />
+                    <input id="pLosses" class="form-control" type="text" placeholder="Enter Losses..." />
+                    <input id="pPoints" class="form-control" type="text" placeholder="Enter Points..." />
+                </form>
+
+                <a href="#" class="btn btn-primary" role="button" id="postUser">Test</a>
+
+                <pre class="code">
+                    <div class="close">X</div>
+                    <p id="postCode"></p>
+                </pre>
+            </p>
+            </section>
+        </section>
+
+        <!-- PUT Requests -->
+        <section class="putRequest">
+            <section class="wrapper">
+            <h2>PUT Requests</h2>
+            <h3>Updating a User<span class="badge blue">PUT</span></h3>
+            <p>
+                In order to update a user you must know the Region and Name of the player, case sensitivty does not matter in this scenario.
+                To update a player, you must send a JSON object to the server.<br /><br />It's important to note that the keys
+                in your JSON object must match those provided in the parameter summary and
+                should be sent to the URI: <mark>/v1/player/country/name?api_key=<span class="selectedKey"></span></mark>
+                <br /><br />
+
+                <!-- Parameters -->
+                <h4>Parameters</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>*location</td>
+                        <td>The new region server the the player exists on. Either ALL, EUNE, EUW, KR, LAN, LAS, NA, OCE, RU or TR</td>
+                    </tr>
+                    <tr>
+                        <td>*name</td>
+                        <td>The new name of the player, this is not case sensitive and must be supplied for a response.</td>
+                    </tr>
+                    <tr>
+                        <td>wins</td>
+                        <td>The new number of wins this user has, default to 0. When a game is won, add 3 to points.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>draws</td>
+                        <td>The new number of draws this user has, defaults to 0. When a game is drawn add 1 to points.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>losses</td>
+                        <td>The new number of losses this user has, defaults to 0. When a game is lost, minus 3 from points.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>points</td>
+                        <td>The new number of points this user has - this will normally be 0 if it is a new user in the system.
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <h4>Response Codes</h4>
+                <!-- Response Codes -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>200</td>
+                        <td>The player was successfully created.</td>
+                    </tr>
+                    <tr>
+                        <td>404</td>
+                        <td>Resource not found: Ensure that the name and location in the URI are spelt correctly and are the correct key pair value, for example /v1/player/EU/Fromp is not the same as /v1/player/NA/Fromp</td>
+                    </tr>
+                    <tr>
+                        <td>500</td>
+                        <td>Internal server error when updating the player.</td>
+                    </tr>
+                </table>
+
+                <br />
+                <h4>Demo</h4>
+                Please fill in the parameters below to update the user, if any parameters are left blank a default query and object will be sent to the server.<br /><br />
+
+                <form class="form-inline">
+                    <!-- Get the region -->
+                    <select id="uRegion" class="form-control">
+                        <option>ALL</option>
+                        <option>EUNE</option>
+                        <option>EUW</option>
+                        <option>KR</option>
+                        <option>LAN</option>
+                        <option>LAS</option>
+                        <option>NA</option>
+                        <option>OCE</option>
+                        <option>RU</option>
+                        <option>TR</option>
+                    </select>
+                    <!-- Get the player name -->
+                    <input id="uName" class="form-control" type="text" placeholder="Enter Name..." />
+                    <input id="uWins" class="form-control" type="text" placeholder="Enter Wins..." />
+                    <input id="uDraws" class="form-control" type="text" placeholder="Enter Draws..." />
+                    <input id="uLosses" class="form-control" type="text" placeholder="Enter Losses..." />
+                    <input id="uPoints" class="form-control" type="text" placeholder="Enter Points..." />
+                </form>
+
+                <a href="#" class="btn btn-primary" role="button" id="updateButton">Test</a>
+
+                <pre class="code">
+                    <div class="close">X</div>
+                    <p id="updateCode"></p>
+                </pre>
+                
+            </p>
+            </section>
+
+        </section>
+        
+        <!-- DELETE Requests -->
+        <section class="deleteRequest">
+            <section class="wrapper">
+                <h2>DELETE Requests</h2>
+                <h3>Deleting a User<span class="badge red">DELETE</span></h3>
+                <p>
+                    Deleting a User is a permanent transaction and you must be authorised to perform this query; if you do 
+                    not have a Private Key then you will not be able to access this resource.<br /><br />
+                    In order to delete a user, simply provide the players country and name as parameters in the URI:<br />
+                    <mark>/v1/player/country/player?api_key=<span class="selectedKey"></span></mark>
+                    <br /><br />
+                    In order to demonstrate this, please fill in the basic form below and press Test.  If no parameters are
+                    provided then a 404 should be returned, indicating the resource was not found.
+                    <br /><br />
+
+                <!-- Parameters -->
+                <h4>Parameters</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>*location</td>
+                        <td>The region server the the player exists on. Either ALL, EUNE, EUW, KR, LAN, LAS, NA, OCE, RU or TR</td>
+                    </tr>
+                    <tr>
+                        <td>*name</td>
+                        <td>The name of the player to be deleted</td>
+                    </tr>
+                </table>
+                <br />
+                <h4>Response Codes</h4>
+                <!-- Response Codes -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td>200</td>
+                        <td>The player was successfully deleted.</td>
+                    </tr>
+                    <tr>
+                        <td>404</td>
+                        <td>Bad Request: Ensure that the name and location in the URI are spelt correctly and are the correct key pair value, for example /v1/player/EU/Fromp is not the same as /v1/player/NA/Fromp</td>
+                    </tr>
+                    <tr>
+                        <td>500</td>
+                        <td>Internal server error when deleting the player.</td>
+                    </tr>
+                </table>
+
+                <br />
+                <h4>Demo</h4>
+
+                    <form class="form-inline">
+                        <!-- Get the region -->
+                        <select id="dRegion" class="form-control">
+                            <option>ALL</option>
+                            <option>EUNE</option>
+                            <option>EUW</option>
+                            <option>KR</option>
+                            <option>LAN</option>
+                            <option>LAS</option>
+                            <option>NA</option>
+                            <option>OCE</option>
+                            <option>RU</option>
+                            <option>TR</option>
+                        </select>
+                        <!-- Get the player name -->
+                        <input id="dName" class="form-control" type="text" placeholder="Enter Name..." />
+                    </form>
+
+                    <a href="#" class="btn btn-primary" role="button" id="btnDelete">Test</a>
+
+                    <pre class="code">
+                        <div class="close">X</div>
+                        <p id="deleteCode"></p>
+                    </pre>
+                </p>
+            </section>
+        </section>
+   </section>
+</body>
+</html>

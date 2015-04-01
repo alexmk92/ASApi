@@ -26,10 +26,10 @@ public class ASKeyHandler : ASHttpHandler
     */
     private UriTemplate adminKeyTemplate = new UriTemplate("/modules/soft338/asims/v1/key/admin");
     private UriTemplate guestKeyTemplate = new UriTemplate("/modules/soft338/asims/v1/key/guest");
+    private UriTemplate resetKeyTemplate = new UriTemplate("/modules/soft338/asims/v1/key/reset?api_key={apiKey}");
     private UriTemplate baseKeyTemplate  = new UriTemplate("/modules/soft338/asims/v1/key");
 
     private Uri requestedUri;
-
 
     // As usual, this constructor does not require any inistialisation
     public ASKeyHandler(Uri requestedUri)
@@ -50,6 +50,11 @@ public class ASKeyHandler : ASHttpHandler
         res = baseKeyTemplate.Match(prefix, requestedUri);
         if (res != null)
             ProcessKeys(context, res);
+
+        // Resets the given key
+        res = resetKeyTemplate.Match(prefix, requestedUri);
+        if (res != null)
+            ProcessKey(context, res, ASDatabase.ASPermission.ADMIN);
 
         // Handles manging of admin keys
         res = adminKeyTemplate.Match(prefix, requestedUri);
@@ -93,6 +98,8 @@ public class ASKeyHandler : ASHttpHandler
         {
             case "POST": PostNewKey(context, p);
                 break;
+            case "PUT": PutKey(context, template);
+                break;
             default: SetResponse(context, 500, true, null);
                 break;
         }
@@ -121,7 +128,7 @@ public class ASKeyHandler : ASHttpHandler
     }
 
     /// <summary>
-    /// Calls the public interface in ASPlayerManager to insert the new Player to the
+    /// Calls the public interface in ASKeyManager to insert the new Player to the
     /// database, this will only be done if a response was recieved from the Riot Games API
     /// indicating that the player is infact valid.
     /// </summary>
@@ -134,7 +141,56 @@ public class ASKeyHandler : ASHttpHandler
         /*
          * Handle the response and write it to the client.
          */
+        if (k == null || !k.IsValid())
+        {
+            SetResponse(context, 400, false, k);
+            return;
+        }
+
+        // Everything succeeded
         SetResponse(context, 200, false, k);
+    }
+
+    /// <summary>
+    /// Updates the API key by querying the ASKeyManager for the current set key set in the
+    /// query param of the URI.  If an API key is set, the old key will be deleted and a new
+    /// one shall be generated. This will return a response code use to trigger the output.
+    /// </summary>
+    /// <param name="context"></param>
+    private void PutKey(HttpContext context, UriTemplateMatch template)
+    {
+        // Assume an internal error
+        Int32 response = 500;
+        IDictionary<ASKey, Int32> res = new Dictionary<ASKey, Int32>();
+        List<ASKey> keys = new List<ASKey>();
+        string key = "";
+
+        // Check if a nation has been set
+        if (template.BoundVariables.AllKeys.Length != 0)
+            key = template.BoundVariables["apiKey"];
+
+        // If no key has been specified then this is a bad request
+        if (string.IsNullOrEmpty(key) || key.Length < 24)
+        {
+            SetResponse(context, 400);
+            return;
+        }
+
+        // Attempt to get result
+        res = ASKeyManager.ReplaceKey(key);
+
+        // If no items were returned - this is an internal error
+        if (res.Count == 0)
+        {
+            SetResponse(context, 500);
+            return;
+        }
+
+        // Add the key to the data output
+        keys.Add(res.ElementAt(0).Key);
+
+        // Success - send the respnse from the 
+        SetResponse(context, res.ElementAt(0).Value, false, res.ElementAt(0).Key, 0, keys);
     }
 
     /// <summary>
@@ -157,8 +213,8 @@ public class ASKeyHandler : ASHttpHandler
         if (string.IsNullOrEmpty(key) || key.Length < 24)
             response = 400;
 
-        // Get the ID of the requested player set in the URI, and then pass this to the update call in
-        // the ASPlayerManager handler.  The ID cannot be read from the input stream as it is unknown and therefore
+        // Get the ID of the requested key set in the URI, and then pass this to the update call in
+        // the ASKeyManager handler.  The ID cannot be read from the input stream as it is unknown and therefore
         // needs to be requested seperately.
         DataContractJsonSerializer json = new DataContractJsonSerializer(typeof(IEnumerable<ASKey>));
 
@@ -213,13 +269,16 @@ public class ASKeyHandler : ASHttpHandler
                         responses["200"] = "Success: the key was retrieved.";
                     }
                     break;
+                case "PUT":
+                    responses["500"] = "There was an internal server error when updating this key.";
+                    responses["404"] = "The requested key was not found on the server";
+                    responses["400"] = "Bad Request: Please ensure you specified the correct key";
+                    responses["200"] = "Success: your new key is " + k.GetKey() + ", it has " + k.GetPermissionAsString() + " permissions.";
+                    break;
                 case "POST":
                     responses["500"] = "There was an internal server error when creating the new key.";
                     responses["400"] = "Bad Request: Please ensure the path you are POSTing too is valid: /v1/key";
-                    if(k.GetPermission() == 0)
-                        responses["200"] = "Success: the new GUEST key: " + k.GetKey() + " was added to the system.";
-                    else
-                        responses["200"] = "Success: the new ADMIN key: " + k.GetKey() + " was added to the system.";
+                    responses["200"] = "Success: the new " + k.GetPermissionAsString() + " key: " + k.GetKey() + " was added to the system.";
                     break;
                 case "DELETE":
                     responses["500"] = "There was an internal server error when deleting this key.";
@@ -238,8 +297,11 @@ public class ASKeyHandler : ASHttpHandler
         catch (Exception e)
         {
             if (!uncaught)
-                errorCode = (errorCode == 401) ? 401 : 500;
-            responses["500"] = "There was an uncaught internal server error, please check your URI and try again.";
+            {
+                if(errorCode != 404 || errorCode != 400 || errorCode != 200)
+                    errorCode = 500;
+                responses["500"] = "There was an uncaught internal server error, please check your URI and try again.";
+            }
         }
 
         // Uncaught exception occurs when the URI 
@@ -253,10 +315,10 @@ public class ASKeyHandler : ASHttpHandler
         responses["401"] = "You are not authorised to access this resource, your API key is limited to GET requests.";
 
         // We know that the error code pertains to the key, therefore we convert it to string to produce the output
-        var response = new ASResponse(errorCode, responses[errorCode.ToString()], data);
+        var response = new ASKeyResponse(errorCode, responses[errorCode.ToString()], data);
 
         // Write the JSON back to the client
-        var json = new DataContractJsonSerializer(typeof(ASResponse));
+        var json = new DataContractJsonSerializer(typeof(ASKeyResponse));
         json.WriteObject(outputStream, response);
     }
 }

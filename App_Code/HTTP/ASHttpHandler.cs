@@ -5,6 +5,7 @@ using System.Web;
 using System.Runtime.Serialization;
 using System.IO;
 using System.Runtime.Serialization.Json;
+using System.Net;
 
 /// <summary>
 /// Parent HTTP Handler used to handle requests to the API.  
@@ -16,8 +17,12 @@ using System.Runtime.Serialization.Json;
 public class ASHttpHandler : IHttpHandler
 {
     // Environment configuration constants - used for testing and deployment
-    const string _HOST   = "xserve.uopnet.plymouth.ac.uk";
-    const string _LOCAL  = "localhost:50557";
+    private const string _HOST    = "xserve.uopnet.plymouth.ac.uk";
+    private const string _LOCAL   = "localhost:50557";
+
+    // Define the key to access the consumer API, this key is protected as base
+    // classes may need to refernece it.
+    protected const string _CONSUMER_KEY = "8da50f7f-6b73-4516-af7c-c1449041619a";
 
     // Plug the configuration constant in here...
     protected Uri prefix = new Uri(_LOCAL);
@@ -41,6 +46,7 @@ public class ASHttpHandler : IHttpHandler
     /// </summary>
     public void ProcessRequest(HttpContext context)
     {
+
         // Construct the full request URI to be passed to the delegate controller
         Uri requestedUri = new Uri(prefix + context.Request.RawUrl);
 

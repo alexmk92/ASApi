@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Runtime.Serialization;
 using System.IO;
+using System.Net;
 using System.Runtime.Serialization.Json;
 
 /// <summary>
@@ -24,9 +25,9 @@ public class ASPlayerHandler : ASHttpHandler
     * 
     * ---------------------------------------------------------------------------
     */
-    private UriTemplate playerByNameTemplate = new UriTemplate("/modules/soft338/asims/v1/player/{country}/by-name/{name}?key={apiKey}");
-    private UriTemplate allPlayersTemplate   = new UriTemplate("/modules/soft338/asims/v1/player/{country}?key={apiKey}");
-    private UriTemplate basePlayerTemplate   = new UriTemplate("/modules/soft338/asims/v1/player?key={apiKey}");
+    private UriTemplate playerByNameTemplate = new UriTemplate("/modules/soft338/asims/v1/player/{country}/{name}?api_key={apiKey}");
+    private UriTemplate allPlayersTemplate   = new UriTemplate("/modules/soft338/asims/v1/player/{country}?api_key={apiKey}");
+    private UriTemplate basePlayerTemplate   = new UriTemplate("/modules/soft338/asims/v1/player?api_key={apiKey}");
 
     private Uri requestedUri;
 
@@ -91,7 +92,7 @@ public class ASPlayerHandler : ASHttpHandler
                 break;
             case "DELETE": DeletePlayer(context, template);
                 break;
-            default: SetResponse(context, 500, true, null);
+            default: SetResponse(context, 500, false, true, null);
                 break;
         }
     }
@@ -118,7 +119,7 @@ public class ASPlayerHandler : ASHttpHandler
                 break;
             case "GET": GetAllPlayers(context, template);
                 break;
-            default: SetResponse(context, 500, true, null);
+            default: SetResponse(context, 500, false, true);
                 break;
         }
     }
@@ -143,7 +144,7 @@ public class ASPlayerHandler : ASHttpHandler
         {
             case "GET": GetAllPlayers(context, template);
                 break;
-            default: SetResponse(context, 500, true, null);
+            default: SetResponse(context, 500, true);
                 break;
         }
     }
@@ -171,9 +172,9 @@ public class ASPlayerHandler : ASHttpHandler
         IEnumerable<ASPlayer> players = ASPlayerManager.GetAllPlayers(nation);
         
         if(players.Count() > 0)
-            SetResponse(context, 200, false, players.ElementAt(0), 0, players);
+            SetResponse(context, 200, false, false, players.ElementAt(0), 0, players);
         else
-            SetResponse(context, 404, true, null);
+            SetResponse(context, 404, true);
     }
 
 
@@ -204,7 +205,17 @@ public class ASPlayerHandler : ASHttpHandler
         DataContractJsonSerializer json = new DataContractJsonSerializer(typeof(IEnumerable<ASPlayer>));
         IEnumerable<ASPlayer> players = ASPlayerManager.GetPlayersByName(nation, name);
 
-        SetResponse(context, 200, false, players.ElementAt(0), 0, players);
+        if (players.Count() != 0)
+        {
+            SetResponse(context, 200, false, false, players.ElementAt(0), 0, players);
+            return;
+        }
+
+        // This player object is purely used for outputting Debug messages
+        ASPlayer p = new ASPlayer(name, nation, 0, 0, 0, 0);
+
+        // No Players were found on the server
+        SetResponse(context, 404, false, false, p);
     }
 
     /// <summary>
@@ -255,7 +266,7 @@ public class ASPlayerHandler : ASHttpHandler
         response = ASPlayerManager.UpdatePlayer(p, playerId);
 
         // Handle the response code.
-        SetResponse(context, response, false, p, playerId);
+        SetResponse(context, response, false, false, p, playerId);
     }
 
     /// <summary>
@@ -273,22 +284,61 @@ public class ASPlayerHandler : ASHttpHandler
             return;
         }
 
-        // Set the Input Stream to 0, this is because sometimes it is not initialised here meaning not all of the JSON
-        // object is read.
-        context.Request.InputStream.Position = 0;
-
         /*
          * Create the Serializer and read the JSON stream into a new ASPlayer object.
          */
         DataContractJsonSerializer json = new DataContractJsonSerializer(typeof(ASPlayer));
         ASPlayer p = (ASPlayer)json.ReadObject(context.Request.InputStream);
+
+        // Build the consumer URL
+        string consumerUrl = "https://" + p.GetLocation().ToLower() + ".api.pvp.net/api/lol/" + p.GetLocation().ToLower() + "/v1.4/summoner/by-name/" + p.GetName() + "?api_key=" + _CONSUMER_KEY;
+        HttpStatusCode code = doesResourceExist(consumerUrl);
+
+        // Check if the player is valid by consuming 3rd party API - the default
+        // will catch the unspecified message of a 429 (not set by C# constants)
+        // this describes rate limits being exceeded - only break if OK, otherwise
+        // raise exception to client and return to end method.
+        switch(code)
+        {
+            case HttpStatusCode.OK:
+                break;
+            case HttpStatusCode.BadRequest:
+                SetResponse(context, 400, true, false, p);
+                return;
+            case HttpStatusCode.Unauthorized:
+                SetResponse(context, 401, true, false, p);
+                return;
+            case HttpStatusCode.NotFound:
+                SetResponse(context, 404, true, false, p);
+                return;
+            case HttpStatusCode.InternalServerError:
+                SetResponse(context, 500, true, false, p);
+                return;
+            case HttpStatusCode.ServiceUnavailable:
+                SetResponse(context, 503, true, false, p);
+                return;
+            default:
+                SetResponse(context, 429, true, false, p);
+                return;
+        }
+        
+        // Set the Input Stream to 0, this is because sometimes it is not initialised here meaning not all of the JSON
+        // object is read.
+        context.Request.InputStream.Position = 0;
+
+        // Assuming we have got this far - we can create the new player
         Int32 playerId = ASPlayerManager.InsertNewPlayer(p);
 
         /*
          * Handle the response and write it to the client.
          */
-        SetResponse(context, 200, false, p, playerId, null);
-        
+        if(playerId != 0) {
+            SetResponse(context, 200, false, false, p, playerId);
+            return;
+        }
+
+        // The player already exists
+        SetResponse(context, 400, false, false, p);
     }
 
     /// <summary>
@@ -330,13 +380,50 @@ public class ASPlayerHandler : ASHttpHandler
         if (ASPlayerManager.GetPlayersByName(nation, name).Count != 0)
             p = ASPlayerManager.GetPlayersByName(nation, name).ElementAt(0);
         else
-            response = 404;
+        {
+            ASPlayer temp = new ASPlayer(name, nation, 0, 0, 0, 0);
+            SetResponse(context, 404, false, false, temp);
+            return;
+        }
 
         // Delete the player
         response = ASPlayerManager.DeletePlayer(p);
 
         // Handle the response code.
-        SetResponse(context, response, false, p);       
+        SetResponse(context, response, false, false, p);       
+    }
+
+    /// <summary>
+    /// Returns the status code from the header of the consumer API.
+    /// The codes here match up to the codes from the API
+    /// </summary>
+    /// <param name="url"></param>
+    /// <returns></returns>
+    private HttpStatusCode doesResourceExist(string url)
+    {
+        // Request the head from the resource only to check if it is online - if not retunr false
+        // to raise a 501 error (service not available)
+        try
+        {
+            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
+            request.Method  = "GET";
+            request.Timeout = 2500;
+            request.Proxy   = WebProxy.GetDefaultProxy();
+
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            {
+                return response.StatusCode;
+            }
+                
+            // bad request.
+            return HttpStatusCode.ServiceUnavailable;
+        }
+        // This will trigger if the request times out, in this case return false to log a 501
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            return HttpStatusCode.ServiceUnavailable;
+        }
     }
 
     /// <summary>
@@ -347,7 +434,7 @@ public class ASPlayerHandler : ASHttpHandler
     /// <param name="p">The player object to format the output string</param>
     /// <param name="playerId">The players ID (optional)</param>
     /// <param name="data">List of objects to be put out to the client, normally ASPlayer objects</param>
-    private void SetResponse(HttpContext context, Int32 errorCode, bool uncaught = false, ASPlayer p = null, Int32 playerId = 0, IEnumerable<ASPlayer> data = null)
+    private void SetResponse(HttpContext context, Int32 errorCode, bool APICall = false, bool uncaught = false, ASPlayer p = null, Int32 playerId = 0, IEnumerable<ASPlayer> data = null)
     {
         // Set the header type and build output stream
         Stream outputStream = context.Response.OutputStream;
@@ -365,7 +452,7 @@ public class ASPlayerHandler : ASHttpHandler
             switch (verb)
             {
                 case "GET":
-                    if (data.Count() > 1)
+                    if (data != null && data.Count() > 1)
                     {
                         responses["500"] = "There was an internal server error when trying to retrieve the users.";
                         responses["404"] = "No players were found for on the " + p.GetLocation() + " server.";
@@ -375,7 +462,7 @@ public class ASPlayerHandler : ASHttpHandler
                     else
                     {
                         responses["500"] = "There was an internal server error when trying to retrieve the user.";
-                        responses["404"] = "The requested resource was not found on the server, please ensure the name is spelt correctly and check that you are searching the right region: /v1/player/" + p.GetLocation() + " will produce different results to /v1/player/ALL";
+                        responses["404"] = "The requested resource was not found on the server, please ensure the name is spelt correctly and check that you are searching the right region: /v1/player/" + p.GetLocation() + "/" + p.GetName() + " will produce different results to /v1/player/ALL/Test";
                         responses["400"] = "Bad Request: Please ensure the location you specified is correct, and that the path is in valid format: /v1/player/" + p.GetLocation() + "/by-name/" + p.GetName();
                         responses["200"] = "Success: the user was retrieved.";
                     }
@@ -388,7 +475,7 @@ public class ASPlayerHandler : ASHttpHandler
                     break;
                 case "POST":
                     responses["500"] = "There was an internal server error when creating the new player.";
-                    responses["400"] = "Bad Request: Please ensure the path you are POSTing too is valid: /v1/player";
+                    responses["400"] = "Bad Request: The player " + p.GetName() + " already exists on the " + p.GetLocation() + " server, please try again.";
                     responses["200"] = "Success: the Player " + p.GetName() + " on the " + p.GetLocation() + " server was created!";
                     break;
                 case "DELETE":
@@ -419,14 +506,25 @@ public class ASPlayerHandler : ASHttpHandler
             responses["404"] = "Resource not found: No users exist in the system";
         }
 
+        // Check if this request has been returned from the API
+        if (APICall)
+        {
+            responses["400"] = "Bad request made to the 3rd party API";
+            responses["401"] = "Your API key is not authorized to access the 3rd party API";
+            responses["404"] = "No player information matches: " + p.GetName() + " on the " + p.GetLocation() + " server.  Please check your input and try again.";
+            responses["429"] = "Request limit exceeded on the third party API. Please try again later.";
+            responses["500"] = "The third party API encountered an Internal server error.";
+            responses["503"] = "Sorry, the 3rd party API is currently unavailable, this will only effect POST transactions. Please try again later.";
+        }
+
         // Unauthorized access token
         responses["401"] = "You are not authorised to access this resource, your API key is limited to GET requests.";
 
         // We know that the error code pertains to the key, therefore we convert it to string to produce the output
-        var response = new ASResponse(errorCode, responses[errorCode.ToString()], data);
+        var response = new ASPlayerResponse(errorCode, responses[errorCode.ToString()], data);
 
         // Write the JSON back to the client
-        var json = new DataContractJsonSerializer(typeof(ASResponse));
+        var json = new DataContractJsonSerializer(typeof(ASPlayerResponse));
         json.WriteObject(outputStream, response);
     }
 

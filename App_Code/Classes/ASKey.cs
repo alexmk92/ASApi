@@ -84,8 +84,49 @@ public class ASKey
     /// Returns the Permission
     /// </summary>
     /// <returns></returns>
-    public Int32 GetPermission()
+    public Int32 GetPermissionAsInt()
     {
         return permission;
+    }
+
+
+    /// <summary>
+    /// Returns the Permission as its enum type
+    /// </summary>
+    /// <returns></returns>
+    public ASDatabase.ASPermission GetPermission()
+    {
+        switch (permission)
+        {
+            case 1:
+                return ASDatabase.ASPermission.ADMIN;
+                break;
+            case 0:
+                return ASDatabase.ASPermission.GUEST;
+                break;
+            default:
+                return ASDatabase.ASPermission.GUEST;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Returns the Permission as a string
+    /// </summary>
+    /// <returns></returns>
+    public string GetPermissionAsString()
+    {
+        switch (permission)
+        {
+            case 1:
+                return "ADMIN";
+                break;
+            case 0:
+                return "GUEST";
+                break;
+            default:
+                return "GUEST";
+                break;
+        }
     }
 }
