@@ -25,9 +25,9 @@ public class ASPlayerHandler : ASHttpHandler
     * 
     * ---------------------------------------------------------------------------
     */
-    private UriTemplate playerByNameTemplate = new UriTemplate("/modules/soft338/asims/v1/player/{country}/{name}?api_key={apiKey}");
-    private UriTemplate allPlayersTemplate   = new UriTemplate("/modules/soft338/asims/v1/player/{country}?api_key={apiKey}");
-    private UriTemplate basePlayerTemplate   = new UriTemplate("/modules/soft338/asims/v1/player?api_key={apiKey}");
+    private UriTemplate playerByNameTemplate = new UriTemplate("//modules/soft338/asims/v1/player/{country}/{name}?api_key={apiKey}");
+    private UriTemplate allPlayersTemplate   = new UriTemplate("//modules/soft338/asims/v1/player/{country}?api_key={apiKey}");
+    private UriTemplate basePlayerTemplate   = new UriTemplate("//modules/soft338/asims/v1/player?api_key={apiKey}");
 
     private Uri requestedUri;
 
@@ -463,7 +463,7 @@ public class ASPlayerHandler : ASHttpHandler
                     {
                         responses["500"] = "There was an internal server error when trying to retrieve the user.";
                         responses["404"] = "The requested resource was not found on the server, please ensure the name is spelt correctly and check that you are searching the right region: /v1/player/" + p.GetLocation() + "/" + p.GetName() + " will produce different results to /v1/player/ALL/Test";
-                        responses["400"] = "Bad Request: Please ensure the location you specified is correct, and that the path is in valid format: /v1/player/" + p.GetLocation() + "/by-name/" + p.GetName();
+                        responses["400"] = "Bad Request: Please ensure the location you specified is correct, and that the path is in valid format: /v1/player/" + p.GetLocation() + "/" + p.GetName();
                         responses["200"] = "Success: the user was retrieved.";
                     }
                     break;

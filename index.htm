@@ -16,11 +16,27 @@
     <link rel="stylesheet" type="text/css" href="./Web/Styles/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="./Web/Styles/main.css" />
 </head>
-<body>
-    
+<body>    
     <!-- Main Body -->
+    <nav id="topBar" class="hidden"></nav>
     <section class="content-fluid">
-        <section class="top">
+        <!-- Left Menu -->
+        <aside>
+            <ul id="menuTop">
+                <li class="active"><a href="#keys">API Keys</a></li>
+                <li><a href="#get">GET Requests</a></li>
+                    <li class="indent"><a href="#allPlayers">Retrieve All Players</a></li>
+                    <li class="indent"><a href="#specificPlayers">Retrieve Specific Player(s)</a></li>
+                <li><a href="#post">POST Requests</a></li>
+                    <li class="indent"><a href="#postPlayer">Creating a new Player</a></li>
+                <li><a href="#put" >PUT Requests</a></li>
+                    <li class="indent"><a href="#putPlayer">Updating a Player</a></li>
+                <li><a href="#delete" >DELETE Requests</a></li>
+                    <li class="indent"><a href="#deletePlayer">Delete a Player</a></li>
+            </ul>
+        </aside>
+
+        <section class="top" id="keys">
             <section class="wrapper">
             <h1>API Documentation</h1>
             <p>
@@ -44,7 +60,7 @@
 
         </section>
         <!-- Get Requests -->
-        <section class="getRequests">
+        <section class="getRequests" id="get">
             <section class="wrapper">
             <h2>GET Requests</h2>
             <p>
@@ -52,7 +68,7 @@
                 with player objects stored in the system, all GET requests can be processed using a Public or Private API key.
 
                 <!-- All Player request -->
-                <h3>Retrieving all Players<p class="badge green">GET</p></h3>
+                <h3 id="allPlayers">Retrieving all Players<p class="badge green">GET</p></h3>
                 <p>
                     In the case that you wish to retrieve all players in the system, simply call <mark>/v1/player?api_key=<span class="selectedKey"></span></mark>
                     this will query the API for all players using your API key. <br /><br />
@@ -76,12 +92,12 @@
                     </tr>
                     <tr>
                         <td>500</td>
-                        <td>Internal server error when retrieving the users, normally caused by an invalid URI or trailing slash after /player</td>
+                        <td>Internal server error when retrieving the Players, normally caused by an invalid URI or trailing slash after /player</td>
                     </tr>
                 </table>
                 <br />
                 <h4>Demo</h4>
-                    In order to demonstrate further, hit the TEST button below to request recieve a list of all current users.<br /><br />
+                    In order to demonstrate further, hit the TEST button below to request recieve a list of all current Players.<br /><br />
                     <a href="#" class="btn btn-primary" role="button" id="btnGetAllPlayers">Test</a>
                 </p>
 
@@ -91,11 +107,11 @@
                 </pre>
                 <hr />
                 <!-- Specific Player request -->
-                <h3>Retrieving Players by Name and Location<p class="badge green">GET</p></h3>
+                <h3 id="specificPlayers">Retrieving Players by Name and Location<p class="badge green">GET</p></h3>
                 <p>
-                    Retrieving all users in the system is well and good, but what if you want to find a specific player? In order to do this you can use the following URI: 
+                    Retrieving all Players in the system is well and good, but what if you want to find a specific player? In order to do this you can use the following URI: 
                     <mark>/v1/player/location/name?api_key=<span class="selectedKey"></span></mark>, it should be noted that providing a location of ALL will search 
-                    for the requested user on every Region server. <br /><br />
+                    for the requested Player on every Region server. <br /><br />
 
                 <!-- Parameters -->
                 <h4>Parameters</h4>
@@ -127,11 +143,11 @@
                     </thead>
                     <tr>
                         <td>200</td>
-                        <td>The request was successful, the user matching the input parameters is returned.</td>
+                        <td>The request was successful, the Player matching the input parameters is returned.</td>
                     </tr>
                     <tr>
                         <td>400</td>
-                        <td>Bad request: caused by the user formatting URI incorrectly, i.e. /v1/player/name/country, instead of/v1/player/country/name</td>
+                        <td>Bad request: caused by the Player formatting URI incorrectly, i.e. /v1/player/name/country, instead of/v1/player/country/name</td>
                     </tr>
                     <tr>
                         <td>404</td>
@@ -139,7 +155,7 @@
                     </tr>
                     <tr>
                         <td>500</td>
-                        <td>Internal server error when retrieving the users, normally caused by an invalid URI or trailing slash after /player</td>
+                        <td>Internal server error when retrieving the Players, normally caused by an invalid URI or trailing slash after /player</td>
                     </tr>
                 </table>
 
@@ -177,12 +193,12 @@
         
 
         <!-- Post request -->
-        <section class="postRequests">
+        <section class="postRequests" id="post">
             <section class="wrapper">
             <h2>POST Requests</h2>
-            <h3>Creating a new user<p class="badge yellow">POST</p></h3>
+            <h3 id="postPlayer">Creating a new Player<p class="badge yellow">POST</p></h3>
             <p>
-                Creating a user may seem a daunting task but we make the process easy. Simply send a JSON object containing all of the fields described in the
+                Creating a Player may seem a daunting task but we make the process easy. Simply send a JSON object containing all of the fields described in the
                 parameters summary, we will then authenticate with the Riot Games API to ensure that this player does infact exist on the server specified.
                 To create a player, simply POST to <mark>/v1/player?api_key=<span class="selectedKey"></span></mark><br /><br />
 
@@ -205,22 +221,22 @@
                     </tr>
                     <tr>
                         <td>wins</td>
-                        <td>The total number of wins this user has, default to 0. When a game is won, add 3 to points.
+                        <td>The total number of wins this Player has, default to 0. When a game is won, add 3 to points.
                         </td>
                     </tr>
                     <tr>
                         <td>draws</td>
-                        <td>The total number of draws this user has, defaults to 0. When a game is drawn add 1 to points.
+                        <td>The total number of draws this Player has, defaults to 0. When a game is drawn add 1 to points.
                         </td>
                     </tr>
                     <tr>
                         <td>losses</td>
-                        <td>The total number of losses this user has, defaults to 0. When a game is lost, minus 3 from points.
+                        <td>The total number of losses this Player has, defaults to 0. When a game is lost, minus 3 from points.
                         </td>
                     </tr>
                     <tr>
                         <td>points</td>
-                        <td>The total number of points this user has - this will normally be 0 if it is a new user in the system.
+                        <td>The total number of points this Player has - this will normally be 0 if it is a new Player in the system.
                         </td>
                     </tr>
                 </table>
@@ -244,7 +260,7 @@
                     </tr>
                     <tr>
                         <td>500</td>
-                        <td>Internal server error when creating the user. Normally caused by an invalid object, or not being able to connect to the third party API.</td>
+                        <td>Internal server error when creating the Player. Normally caused by an invalid object, or not being able to connect to the third party API.</td>
                     </tr>
                 </table>
 
@@ -274,7 +290,7 @@
                     <input id="pPoints" class="form-control" type="text" placeholder="Enter Points..." />
                 </form>
 
-                <a href="#" class="btn btn-primary" role="button" id="postUser">Test</a>
+                <a href="#" class="btn btn-primary" role="button" id="postPlayer">Test</a>
 
                 <pre class="code">
                     <div class="close">X</div>
@@ -285,12 +301,12 @@
         </section>
 
         <!-- PUT Requests -->
-        <section class="putRequest">
+        <section class="putRequest" id="put">
             <section class="wrapper">
             <h2>PUT Requests</h2>
-            <h3>Updating a User<span class="badge blue">PUT</span></h3>
+            <h3 id="putPlayer">Updating a Player<span class="badge blue">PUT</span></h3>
             <p>
-                In order to update a user you must know the Region and Name of the player, case sensitivty does not matter in this scenario.
+                In order to update a Player you must know the Region and Name of the player, case sensitivty does not matter in this scenario.
                 To update a player, you must send a JSON object to the server.<br /><br />It's important to note that the keys
                 in your JSON object must match those provided in the parameter summary and
                 should be sent to the URI: <mark>/v1/player/country/name?api_key=<span class="selectedKey"></span></mark>
@@ -315,22 +331,22 @@
                     </tr>
                     <tr>
                         <td>wins</td>
-                        <td>The new number of wins this user has, default to 0. When a game is won, add 3 to points.
+                        <td>The new number of wins this Player has, default to 0. When a game is won, add 3 to points.
                         </td>
                     </tr>
                     <tr>
                         <td>draws</td>
-                        <td>The new number of draws this user has, defaults to 0. When a game is drawn add 1 to points.
+                        <td>The new number of draws this Player has, defaults to 0. When a game is drawn add 1 to points.
                         </td>
                     </tr>
                     <tr>
                         <td>losses</td>
-                        <td>The new number of losses this user has, defaults to 0. When a game is lost, minus 3 from points.
+                        <td>The new number of losses this Player has, defaults to 0. When a game is lost, minus 3 from points.
                         </td>
                     </tr>
                     <tr>
                         <td>points</td>
-                        <td>The new number of points this user has - this will normally be 0 if it is a new user in the system.
+                        <td>The new number of points this Player has - this will normally be 0 if it is a new Player in the system.
                         </td>
                     </tr>
                 </table>
@@ -360,7 +376,7 @@
 
                 <br />
                 <h4>Demo</h4>
-                Please fill in the parameters below to update the user, if any parameters are left blank a default query and object will be sent to the server.<br /><br />
+                Please fill in the parameters below to update the Player, if any parameters are left blank a default query and object will be sent to the server.<br /><br />
 
                 <form class="form-inline">
                     <!-- Get the region -->
@@ -397,14 +413,14 @@
         </section>
         
         <!-- DELETE Requests -->
-        <section class="deleteRequest">
+        <section class="deleteRequest" id="delete">
             <section class="wrapper">
                 <h2>DELETE Requests</h2>
-                <h3>Deleting a User<span class="badge red">DELETE</span></h3>
+                <h3 id="deletePlayer">Deleting a Player<span class="badge red">DELETE</span></h3>
                 <p>
-                    Deleting a User is a permanent transaction and you must be authorised to perform this query; if you do 
+                    Deleting a Player is a permanent transaction and you must be authorised to perform this query; if you do 
                     not have a Private Key then you will not be able to access this resource.<br /><br />
-                    In order to delete a user, simply provide the players country and name as parameters in the URI:<br />
+                    In order to delete a Player, simply provide the players country and name as parameters in the URI:<br />
                     <mark>/v1/player/country/player?api_key=<span class="selectedKey"></span></mark>
                     <br /><br />
                     In order to demonstrate this, please fill in the basic form below and press Test.  If no parameters are

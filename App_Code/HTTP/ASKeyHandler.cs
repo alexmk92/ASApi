@@ -24,10 +24,10 @@ public class ASKeyHandler : ASHttpHandler
     * 
     * ---------------------------------------------------------------------------
     */
-    private UriTemplate adminKeyTemplate = new UriTemplate("/modules/soft338/asims/v1/key/admin");
-    private UriTemplate guestKeyTemplate = new UriTemplate("/modules/soft338/asims/v1/key/guest");
-    private UriTemplate resetKeyTemplate = new UriTemplate("/modules/soft338/asims/v1/key/reset?api_key={apiKey}");
-    private UriTemplate baseKeyTemplate  = new UriTemplate("/modules/soft338/asims/v1/key");
+    private UriTemplate adminKeyTemplate = new UriTemplate("//modules/soft338/asims/v1/key/admin");
+    private UriTemplate guestKeyTemplate = new UriTemplate("//modules/soft338/asims/v1/key/guest");
+    private UriTemplate resetKeyTemplate = new UriTemplate("//modules/soft338/asims/v1/key/reset?api_key={apiKey}");
+    private UriTemplate baseKeyTemplate  = new UriTemplate("//modules/soft338/asims/v1/key");
 
     private Uri requestedUri;
 

@@ -17,7 +17,7 @@ using System.Net;
 public class ASHttpHandler : IHttpHandler
 {
     // Environment configuration constants - used for testing and deployment
-    private const string _HOST    = "xserve.uopnet.plymouth.ac.uk";
+    private const string _HOST    = "http://xserve.uopnet.plymouth.ac.uk";
     private const string _LOCAL   = "localhost:50557";
 
     // Define the key to access the consumer API, this key is protected as base
@@ -25,7 +25,7 @@ public class ASHttpHandler : IHttpHandler
     protected const string _CONSUMER_KEY = "8da50f7f-6b73-4516-af7c-c1449041619a";
 
     // Plug the configuration constant in here...
-    protected Uri prefix = new Uri(_LOCAL);
+    protected Uri prefix = new Uri(_HOST);
 
     /// <summary>
     /// The constructor is not used to perform any additional initialisation in the
@@ -46,7 +46,6 @@ public class ASHttpHandler : IHttpHandler
     /// </summary>
     public void ProcessRequest(HttpContext context)
     {
-
         // Construct the full request URI to be passed to the delegate controller
         Uri requestedUri = new Uri(prefix + context.Request.RawUrl);
 
@@ -61,8 +60,11 @@ public class ASHttpHandler : IHttpHandler
          * a new request to the ASPlayerHandler
          * ---------------------------------------------------------------------------
          */
-        if (URIString.Contains("/modules/soft338/asims/v1/player"))
+
+        if (URIString.Contains("modules/soft338/asims/v1/player"))
             new ASPlayerHandler(requestedUri).HandleRequest(context);
+
+
 
         /*
         * ---------------------------------------------------------------------------
@@ -84,7 +86,7 @@ public class ASHttpHandler : IHttpHandler
         */
         // Game handling code would go here. For purpose of this assignment just using one resource
 
-        if (URIString.Contains("/modules/soft338/asims/v1/key"))
+        if (URIString.Contains("modules/soft338/asims/v1/key"))
             new ASKeyHandler(requestedUri).HandleRequest(context);
     }
 }

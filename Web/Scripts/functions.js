@@ -8,10 +8,29 @@ var selectedKey = "";
 var _HOST  = "http://xserve.uopnet.plymouth.ac.uk";
 var _LOCAL = "http://localhost:50557";
 
-var _BASE  = "/modules/soft338/asims";
+var _BASE = "/modules/soft338/asims";
 
+// Navigation scrolling effect
+var lastId;
+var menu;
+var items;
+var scrollItems;
+var barShowing = false;
+
+// Fire on ready requests
 $(document).ready(function () {
     getKeys();
+
+    // Set the cache selectors
+    menu = $("#menuTop");
+    items = menu.find("a");
+
+    // Create a map of the positions of the items, use this as 
+    // a reference to query where we have selected on the page
+    scrollItems = items.map(function () {
+        var item = $($(this).attr("href"));
+        if (item.length) { return item; }
+    });
 
     $('.code').hide();
 
@@ -51,6 +70,15 @@ $(document).ready(function () {
     // Close the code snippet
     $('.close').click(function () {
         $(this).parent().slideUp();
+    });
+    // Scroll to selected item
+    items.click(function (e) {
+        var href = $(this).attr("href");
+        var offset = href === "#" ? 0 : $(href).offset().top;
+        $('html, body').stop().animate({
+            scrollTop: offset
+        }, 300);
+        e.preventDefault();
     });
 
     // Post user
@@ -156,10 +184,42 @@ $(document).ready(function () {
             selectedKey = publicKey;
         }
 
-        console.log(selectedKey);
         setFields();
     });
 
+});
+
+// Bind the scroll event to check page location
+$(window).scroll(function () {
+    var currPos = $(this).scrollTop() + 50;
+    var currItem = scrollItems.map(function () {
+        if ($(this).offset().top < currPos)
+            return this;
+    });
+
+    if (currPos > 250 && !barShowing) {
+        $("#topBar").removeClass("hidden");
+        $("#topBar").slideDown("fast");
+        $(".selectedKeyWrap").addClass("keyTop");
+        barShowing = true;
+    } else if(currPos < 250 && barShowing) {
+        barShowing = false;
+        $("#topBar").slideUp("fast", function () {
+            $("#topBar").addClass("hidden")
+            $(".selectedKeyWrap").removeClass("keyTop");
+        });
+    }
+
+    // Get the curr items id and then update the GUI
+    currItem = currItem[currItem.length - 1];
+    var id = currItem && currItem.length ? currItem[0].id : "";
+
+    if (lastId !== id)
+    {
+        lastId = id;
+        // Set the new active state
+        items.parent().removeClass("active").end().filter("[href=#" + id + "]").parent().addClass("active");
+    }
 });
 
 // Populate the global variables 
@@ -168,11 +228,10 @@ function getKeys()
     $.ajax({
         type: "GET",
         contentType: "application/json",
-        url: _LOCAL + _BASE + "/v1/key",
+        url: _HOST + _BASE + "/v1/key",
         cache: false,
         data: {},
         success: function (response) {
-            console.log(response);
             if (response.keys[0].permission == 0) {
                 publicKey  = response.keys[0].key;
                 privateKey = response.keys[1].key;
@@ -188,7 +247,6 @@ function getKeys()
         },
         error: function (response)
         {
-            console.log(response);
         }
     });
 }
@@ -201,21 +259,19 @@ function deletePlayer(key, pName, pRegion)
         player_location: pRegion
     };
 
-    console.log(json);
-
     // Pass the stringified JSON object to the server
     $.ajax({
         type: "DELETE",
         contentType: "application/json",
         dataType: "json",
-        url: _LOCAL + _BASE + "/v1/player/" + pRegion + "/" + pName + "?api_key=" + key,
+        url: _HOST + _BASE + "/v1/player/" + pRegion + "/" + pName + "?api_key=" + key,
         data: JSON.stringify(json),
         success: function (response) {
             // Build the format string
             var outputString = "";
             outputString += "Request Type: 'DELETE',\n"
                           + "Content Type: 'application/json,'\n"
-                          + "Request URL: " + _LOCAL + _BASE + "/v1/player/" + pRegion + "/" + pName + "?api_key=" + key + "\n\n";
+                          + "Request URL: " + _HOST + _BASE + "/v1/player/" + pRegion + "/" + pName + "?api_key=" + key + "\n\n";
 
             outputString += "{ \n    response: " + response.errCode + ", \n" +
                                "    message: '" + response.errMsg + "', \n" +
@@ -264,14 +320,14 @@ function updatePlayer(key, pName, pRegion, pWins, pDraws, pLosses, pPoints) {
         type: "PUT",
         contentType: "application/json",
         dataType: "json",
-        url: _LOCAL + _BASE + "/v1/player/" + pRegion + "/" + pName + "?api_key=" + key,
+        url: _HOST + _BASE + "/v1/player/" + pRegion + "/" + pName + "?api_key=" + key,
         data: JSON.stringify(json),
         success: function (response) {
             // Build the format string
             var outputString = "";
             outputString += "Request Type: 'PUT',\n"
                           + "Content Type: 'application/json,'\n"
-                          + "Request URL: " + _LOCAL + _BASE + "/v1/player/" + pRegion + "/" + pName + "?api_key=" + key + "\n\n";
+                          + "Request URL: " + _HOST + _BASE + "/v1/player/" + pRegion + "/" + pName + "?api_key=" + key + "\n\n";
 
             outputString += "{ \n    response: " + response.errCode + ", \n" +
                                "    message: '" + response.errMsg + "', \n" +
@@ -321,7 +377,7 @@ function postPlayer(key, pName, pRegion, pWins, pDraws, pLosses, pPoints)
         type: "POST",
         contentType: "application/json",
         dataType: "json",
-        url: _LOCAL + _BASE + "/v1/player?api_key=" + key,
+        url: _HOST + _BASE + "/v1/player?api_key=" + key,
         data: JSON.stringify(json),
         success: function(response)
         {
@@ -329,7 +385,7 @@ function postPlayer(key, pName, pRegion, pWins, pDraws, pLosses, pPoints)
             var outputString = "";
             outputString += "Request Type: 'POST',\n"
                           + "Content Type: 'application/json,'\n"
-                          + "Request URL: " + _LOCAL + _BASE + "/player" + "\n\n";
+                          + "Request URL: " + _HOST + _BASE + "/player" + "\n\n";
 
             outputString += "{ \n    response: " + response.errCode + ", \n" +
                                "    message: '" + response.errMsg + "', \n" +
@@ -369,7 +425,6 @@ function getPlayers(key, elem, name, country)
     // Define request URI
     var uri = "";
 
-    console.log(country + " " + name);
     // Set the URI
     if (typeof name != 'undefined' || typeof country != 'undefined')
     {
@@ -383,7 +438,7 @@ function getPlayers(key, elem, name, country)
     $.ajax({
         type: "GET",
         contentType: "application/json",
-        url: _LOCAL + _BASE + uri,
+        url: _HOST + _BASE + uri,
         cache: false,
         data: {},
         success: function (response)
@@ -392,7 +447,7 @@ function getPlayers(key, elem, name, country)
             var outputString = "";
             outputString += "Request Type: 'GET',\n"
                           + "Content Type: 'application/json,'\n"
-                          + "Request URL: " + _LOCAL + _BASE + uri + "\n\n";
+                          + "Request URL: " + _HOST + _BASE + uri + "\n\n";
 
             outputString += "{ \n    response: " + response.errCode + ", \n" +
                                "    message: '" + response.errMsg + "', \n" +
@@ -433,7 +488,7 @@ function resetKey(key)
     $.ajax({
         type: "PUT",
         contentType: "application/json",
-        url: _LOCAL + _BASE + "/v1/key/reset?api_key=" + key,
+        url: _HOST + _BASE + "/v1/key/reset?api_key=" + key,
         cache: false,
         success: function (response) {
             if (response.keys[0].permission == 0) {
@@ -451,7 +506,6 @@ function resetKey(key)
             setFields();
         },
         error: function (response) {
-            console.log(response);
         }
     });
 }
@@ -461,7 +515,7 @@ function setFields()
 {
     $('#publicKey').text(publicKey);
     $('#privateKey').text(privateKey);
-    $('#retrieveCode').text(_LOCAL + _BASE + "/v1/player?api_key=" + selectedKey);
+    $('#retrieveCode').text(_HOST + _BASE + "/v1/player?api_key=" + selectedKey);
     $('.selectedKey').text(selectedKey);
 }
 

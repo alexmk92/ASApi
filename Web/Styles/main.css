@@ -1,15 +1,17 @@
 ﻿body, html {
     margin: 0px;
     padding: 0px;
+    font-size:16px;
 }
 .content-fluid {
     margin: 0 auto;
+    position: relative;
 }
 .content-fluid section {
-    padding: 20px 20px;
+    padding: 10px 20px;
 }
 .content-fluid section:nth-child(2n+2) {
-    background:#e7efef;
+    background:#fafafa;
 }
 
 p, span {
@@ -107,6 +109,82 @@ hr {
 }
 
 .wrapper {
-    max-width: 1000px;
+    max-width: 2400px;
+    position: relative;
     margin: 0 auto;
+    margin-left: 300px;
+}
+
+aside {
+    position: fixed;
+    width: 300px;
+    height: 100%;
+    background:#333;
+    z-index:4;
+}
+
+ul {
+    list-style: none;
+    color: #ccc;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 0px;
+    padding-top: 0px;
+}
+li {
+    padding-top: 22px;
+    padding-left: 25px;
+    height: 65px;
+    border-bottom:1px solid rgba(255,255,255, 0.1);
+    border-top:1px solid rgba(0,0,0,0.2);
+}
+li a {
+    text-decoration:none;
+    color:#eee;
+    display: block;
+}
+
+.indent {
+    padding-left: 45px;
+}
+li a:hover,
+li a:active,
+li a:enabled {
+    text-decoration:none;
+    color:#fff;
+}
+
+
+.active {
+    background: rgba(0,0,0,0.3);
+    color:#d9534f;
+    text-decoration: none;
+    color:#fff;
+}
+.hidden {
+    display:none;
+}
+
+#topBar {
+    height:65px;
+    position:fixed;
+    width:100%;
+    background:rgba(0,0,0,0.9);
+    z-index:2;
+}
+.keyTop {
+    position: fixed;
+    top: 7px;
+    left: 92%;
+    color:#fff;
+    z-index: 5;
+}
+
+@media(max-width: 700px) {
+    aside {
+        display:none;
+    }
+    .wrapper {
+        margin: 0 auto;
+    }
 }
