@@ -37,11 +37,13 @@ $(document).ready(function () {
     // Update the public api key
     $("#resetPublic").click(function () {
         resetKey(publicKey);
+        return false;
     });
 
     // Update the private api key
     $("#resetPrivate").click(function () {
         resetKey(privateKey);
+        return false;
     });
 
     // All users code click
@@ -70,6 +72,7 @@ $(document).ready(function () {
     // Close the code snippet
     $('.close').click(function () {
         $(this).parent().slideUp();
+        return false;
     });
     // Scroll to selected item
     items.click(function (e) {
@@ -79,10 +82,11 @@ $(document).ready(function () {
             scrollTop: offset
         }, 300);
         e.preventDefault();
+        return false;
     });
 
     // Post user
-    $('#postUser').click(function () {
+    $('#postPlayer').click(function () {
         var pName = $('#pName').val();
         var pRegion = $('#pRegion').find(":selected").text();
         var pWins = $('#pPoints').val();
@@ -185,6 +189,7 @@ $(document).ready(function () {
         }
 
         setFields();
+        return false;
     });
 
 });
